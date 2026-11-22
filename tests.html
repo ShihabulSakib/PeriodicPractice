@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PT Practice — Tests</title>
+  <style>
+    body { font: 14px/1.5 system-ui, -apple-system, sans-serif; max-width: 760px; margin: 20px auto; padding: 0 16px; color: #111827; background: #f9fafb; }
+    h1 { font-size: 20px; margin: 0 0 8px; }
+    .summary { padding: 10px 14px; border-radius: 8px; font-weight: 600; margin-bottom: 14px; }
+    .summary.pass { background: #d1fae5; color: #065f46; }
+    .summary.fail { background: #fee2e2; color: #991b1b; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { padding: 6px 10px; border-bottom: 1px solid #e5e7eb; display: flex; gap: 10px; align-items: baseline; }
+    .tag { font-weight: 700; font-size: 12px; padding: 2px 6px; border-radius: 4px; flex-shrink: 0; }
+    .ok .tag { background: #d1fae5; color: #065f46; }
+    .bad .tag { background: #fee2e2; color: #991b1b; }
+    .detail { color: #991b1b; font-family: ui-monospace, monospace; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>Periodic Table Practice — Assertion Suite</h1>
+  <div id="summary" class="summary">Running…</div>
+  <ul id="list"></ul>
+  <script src="js/data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="tests/assertions.js"></script>
+  <script>
+    (function () {
+      const results = window.PTPTests.runAll(window.ELEMENTS, window.OTHER_CELLS, window.TABLE_META, window.Quiz, window.Store);
+      const list = document.getElementById('list');
+      const summary = document.getElementById('summary');
+
+      function render() {
+        const failed = results.filter(r => !r.ok).length;
+        document.body.dataset.result = failed === 0 ? 'pass' : 'fail';
+        summary.className = 'summary ' + (failed === 0 ? 'pass' : 'fail');
+        summary.textContent = `${results.length - failed} / ${results.length} assertions passed` + (failed ? ` (${failed} failed)` : '');
+        list.innerHTML = results.map(r =>
+          `<li class="${r.ok ? 'ok' : 'bad'}"><span class="tag">${r.ok ? 'PASS' : 'FAIL'}</span><span>${r.name}</span>${r.detail ? `<span class="detail">${r.detail}</span>` : ''}</li>`
+        ).join('');
+      }
+      render();
+
+      // When served over http(s), also verify 360px mobile layout (no horizontal overflow, >=44px tap targets)
+      if (location.protocol.startsWith('http')) {
+        const ifr = document.createElement('iframe');
+        ifr.style.cssText = 'width:360px;height:780px;border:1px solid #ccc;position:fixed;left:-9999px;top:0';
+        ifr.src = 'index.html#table';
+        document.body.appendChild(ifr);
+        ifr.onload = () => {
+          setTimeout(() => {
+            try {
+              const doc = ifr.contentDocument;
+              const win = ifr.contentWindow;
+              const sw = doc.documentElement.scrollWidth;
+              const cw = doc.documentElement.clientWidth;
+              results.push({ name: 'Mobile 360px: no horizontal page overflow on Table tab', ok: sw <= cw, detail: sw <= cw ? '' : `scrollWidth ${sw} > ${cw}` });
+              const tabs = Array.from(doc.querySelectorAll('#tabs .tab'));
+              const tabMin = Math.min.apply(null, tabs.map(b => b.getBoundingClientRect().height));
+              results.push({ name: 'Mobile 360px: bottom tab buttons >= 44px tall', ok: tabMin >= 44, detail: tabMin >= 44 ? '' : `min height ${tabMin}` });
+              win.location.hash = '#practice';
+              setTimeout(() => {
+                const startBtn = doc.querySelector('[data-action="start-session"]');
+                if (startBtn) startBtn.click();
+                const opts = Array.from(doc.querySelectorAll('.opt'));
+                const optMin = opts.length ? Math.min.apply(null, opts.map(b => b.getBoundingClientRect().height)) : 0;
+                const sw2 = doc.documentElement.scrollWidth;
+                results.push({ name: 'Mobile 360px: MCQ option buttons >= 48px tall & no overflow', ok: optMin >= 48 && sw2 <= cw, detail: `minH=${optMin}, scrollW=${sw2}` });
+                render();
+                ifr.remove();
+              }, 80);
+            } catch (e) {
+              results.push({ name: 'Mobile 360px iframe check', ok: false, detail: e.message });
+              render();
+            }
+          }, 80);
+        };
+      }
+    })();
+  </script>
+</body>
+</html>

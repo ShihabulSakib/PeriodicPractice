@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="108" fill="#0f766e"/>
+  <rect x="28" y="28" width="456" height="456" rx="86" fill="none" stroke="#99f6e4" stroke-width="10" stroke-opacity="0.35"/>
+  <text x="64" y="128" fill="#ccfbf1" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="68" font-weight="800">78</text>
+  <text x="448" y="124" text-anchor="end" fill="#99f6e4" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="52" font-weight="700">195</text>
+  <text x="256" y="330" text-anchor="middle" fill="#ffffff" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="220" font-weight="900">Pt</text>
+  <text x="256" y="424" text-anchor="middle" fill="#ccfbf1" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="46" font-weight="700" letter-spacing="2">PRACTICE</text>
+</svg>
