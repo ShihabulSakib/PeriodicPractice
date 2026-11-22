@@ -6,13 +6,14 @@ The app lets him practice the **59 essential elements**: their **positions (peri
 
 ## 0. Inputs you are given
 
-- `data.js`, already generated and validated. **Do not edit any value in it.** It defines three globals:
+- `js/data.js`, already generated and validated. It was patched **once** by `tools/apply_school_masses.js` (see "Mass rule" below). **Do not edit any value in it.** It defines three globals:
   - `window.ELEMENTS`: the 59 essential elements with full detail.
   - `window.OTHER_CELLS`: the other 59 elements as `[Z, symbol, gridRow, gridCol]`, used only to draw dimmed tiles.
   - `window.TABLE_META`: grid metadata.
-- Key fields on each element: `atomicNumber, symbol, name, alternateNames[], period, iupacGroup (null for La/Ac/Th/U), classicalGroup, block, hscBlock, category, gridRow, gridCol, examTags[], atomicMass, atomicMassPrecise, massSource ("user" | "derived"), massIsApprox?`
+- Key fields on each element: `atomicNumber, symbol, name, alternateNames[], period, iupacGroup (null for La/Ac/Th/U), classicalGroup, block, hscBlock, category, gridRow, gridCol, examTags[], atomicMass, atomicMassPrecise, massSource ("user" | "school" | "derived"), massIsApprox?`
 - `atomicMass` is the **exam value** and is what the quiz treats as correct. `atomicMassPrecise` is the IUPAC-style value; it is also accepted in typed-answer mode (±0.15).
-- 27 masses are `massSource: "user"` (the student's own collected list). 32 are `"derived"` and still need verification by him. In the detail sheet, show a small subtle "unverified" marker (e.g. a dotted underline and a tooltip or footnote) for `derived` masses, so he knows which ones to double-check.
+- 27 masses are `massSource: "user"` (the student's own collected list). 12 are `"school"` (HSC school values from `hsc_physics_chemistry_constants.json`). 20 are `"derived"` and still need verification by him. In the detail sheet, show a small subtle "unverified" marker (e.g. a dotted underline and a tooltip or footnote) **only** for `derived` masses, so he knows which ones to double-check. `school` masses get a subtle "HSC school ref." caption.
+- **Mass rule (user decision, 2026-11-22):** `user` values always win, even where the JSON differs (e.g. Zn stays 65.4, not 65). Derived elements present in the JSON took the JSON `relative_atomic_mass_school` value (`massSource: "school"`). Derived elements not in the JSON keep their value.
 
 ## 1. Hard constraints
 
@@ -36,7 +37,7 @@ The app lets him practice the **59 essential elements**: their **positions (peri
 ├─ css/
 │  └─ style.css
 ├─ js/
-│  ├─ data.js             # provided, unchanged
+│  ├─ data.js             # provided (patched once by tools/apply_school_masses.js)
 │  ├─ storage.js          # localStorage wrapper + Leitner state
 │  ├─ quiz.js             # pure question generators (no DOM)
 │  ├─ ui.js               # rendering helpers, screens
@@ -47,7 +48,10 @@ The app lets him practice the **59 essential elements**: their **positions (peri
 │  ├─ icon-512.png
 │  ├─ icon-maskable-512.png
 │  └─ apple-touch-icon.png   # 180x180
-└─ tests.html             # optional dev page: data and generator assertions
+├─ tests.html             # dev page: data and generator assertions
+├─ tests/                 # assertions.js (shared) + run-node.js (dev only)
+├─ tools/                 # apply_school_masses.js, make-icons.sh (dev only)
+└─ docs/                  # AGENT_PROMPT.md, IMPLEMENTATION_PLAN.md, PROGRESS.md
 ```
 
 Load scripts with plain `<script src="js/...">` tags in order (data, storage, quiz, ui, app) with `defer`. Do not use ES modules, because they break on `file://`.
@@ -132,7 +136,7 @@ A launcher screen with:
 - Accessibility: real `<button>` elements, `aria-label`s on tiles (e.g. "Copper, atomic number 29"), visible focus styles, `aria-live="polite"` for feedback, `prefers-reduced-motion` respected, sufficient contrast in light and dark mode.
 - `tests.html` (optional but recommended): load `data.js` and `quiz.js` and run assertions, rendered as a pass/fail list:
   - 59 elements, unique atomic numbers, all grid positions across `ELEMENTS` + `OTHER_CELLS` are unique (118 total).
-  - The 27 `massSource: "user"` masses equal the values in the spec table (section 9).
+  - The 27 `massSource: "user"` masses equal the values in the spec table (section 9), and the 12 `"school"` masses equal the JSON `relative_atomic_mass_school` values (section 9).
   - For each question type, generate 500 questions with a seeded rng and assert: unique options, exactly one correct, option count equals the setting (4 and 6), no distractor mass equals the correct mass or its `atomicMassPrecise`.
   - f-series group questions always include both series options and the right one is marked correct.
 
@@ -173,7 +177,11 @@ A launcher screen with:
 
 H 1 · C 12 · N 14 · O 16 · Na 23 · Mg 24 · Al 27 · P 31 · S 32 · Cl 35.5 · K 39.1 · Ca 40 · Cr 52 · Mn 54.93 · Fe 55.85 · Co 59 · Ni 58.7 · Cu 63.5 · Zn 65.4 · As 74.9 · Br 80 · Ag 108 · I 127 · Ba 137 · Au 197 · Hg 200.5 · Pb 207
 
-Note: Co is 59 here (not 58.93) and Hg is 200.5 (not 200.6) on purpose; these are the exam values he collected. Do not "correct" them.
+Note: Co is 59 here (not 58.93) and Hg is 200.5 (not 200.6) on purpose; these are the exam values he collected. Do not "correct" them. User values win over the JSON (e.g. Zn stays 65.4).
+
+The 12 `massSource: "school"` values (from `hsc_physics_chemistry_constants.json`): He 4 · Li 7 · Be 9 · B 11 · F 19 · Ne 20 · Si 28 · Ar 40 · Se 79 · Sn 119 · Pt 195 · U 238
+
+Note: Ar and Ca share the exam mass 40, so mass questions must never offer the other one as a distractor.
 
 ## 10. Acceptance criteria
 
